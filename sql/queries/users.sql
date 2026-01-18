@@ -1,8 +1,8 @@
--- name: GetUser :one
+-- name: GetUserByID :one
 SELECT * FROM users WHERE id = $1;
 
--- name: ListUsers :many
-SELECT * FROM users ORDER BY created_at DESC;
+-- name: GetUserByClerkID :one
+SELECT * FROM users WHERE clerk_id = $1;
 
 -- name: CreateUser :one
-INSERT INTO users (email) VALUES ($1) RETURNING *;
+INSERT INTO users (clerk_id, email) VALUES ($1, $2) RETURNING *;

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/joho/godotenv"
 
 	"mova-backend/internal/database"
@@ -21,6 +22,12 @@ func main() {
 		log.Fatal("DATABASE_URL is required")
 	}
 
+	clerkKey := os.Getenv("CLERK_SECRET_KEY")
+	if clerkKey == "" {
+		log.Fatal("CLERK_SECRET_KEY is required")
+	}
+	clerk.SetKey(clerkKey)
+
 	ctx := context.Background()
 	pool, err := database.NewPool(ctx, dbURL)
 	if err != nil {
@@ -30,7 +37,8 @@ func main() {
 
 	log.Println("Connected to database")
 
-	r := router.Setup()
+	queries := database.New(pool)
+	r := router.Setup(queries)
 
 	log.Println("Starting server on :8080")
 	if err := r.Run(":8080"); err != nil {

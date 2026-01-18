@@ -7,50 +7,59 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (email) VALUES ($1) RETURNING id, email, created_at
+INSERT INTO users (clerk_id, email) VALUES ($1, $2) RETURNING id, clerk_id, email, created_at
 `
 
-func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, email)
+type CreateUserParams struct {
+	ClerkID string
+	Email   string
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.ClerkID, arg.Email)
 	var i User
-	err := row.Scan(&i.ID, &i.Email, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.ClerkID,
+		&i.Email,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
-const getUser = `-- name: GetUser :one
-SELECT id, email, created_at FROM users WHERE id = $1
+const getUserByClerkID = `-- name: GetUserByClerkID :one
+SELECT id, clerk_id, email, created_at FROM users WHERE clerk_id = $1
 `
 
-func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRow(ctx, getUser, id)
+func (q *Queries) GetUserByClerkID(ctx context.Context, clerkID string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByClerkID, clerkID)
 	var i User
-	err := row.Scan(&i.ID, &i.Email, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.ClerkID,
+		&i.Email,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
-const listUsers = `-- name: ListUsers :many
-SELECT id, email, created_at FROM users ORDER BY created_at DESC
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, clerk_id, email, created_at FROM users WHERE id = $1
 `
 
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(&i.ID, &i.Email, &i.CreatedAt); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.ClerkID,
+		&i.Email,
+		&i.CreatedAt,
+	)
+	return i, err
 }
