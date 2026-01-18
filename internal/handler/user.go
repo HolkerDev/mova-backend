@@ -5,28 +5,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mova-backend/internal/database"
 	"mova-backend/internal/middleware"
 )
 
-type UserHandler struct {
-	queries *database.Queries
-}
+type UserHandler struct{}
 
-func NewUserHandler(queries *database.Queries) *UserHandler {
-	return &UserHandler{queries: queries}
+func NewUserHandler() *UserHandler {
+	return &UserHandler{}
 }
 
 func (h *UserHandler) GetMe(c *gin.Context) {
-	clerkUserID := middleware.GetClerkUserID(c)
-	if clerkUserID == "" {
+	user, ok := middleware.GetAuthUser(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	user, err := h.queries.GetUserByClerkID(c.Request.Context(), clerkUserID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
 

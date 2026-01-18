@@ -25,9 +25,9 @@ func Setup(queries *database.Queries, clerkWebhookSecret string) (*gin.Engine, e
 
 	// Protected routes
 	protected := r.Group("/")
-	protected.Use(middleware.ClerkAuth())
+	protected.Use(middleware.ClerkAuth(queries))
 	{
-		userHandler := handler.NewUserHandler(queries)
+		userHandler := handler.NewUserHandler()
 		protected.GET("/me", userHandler.GetMe)
 	}
 
