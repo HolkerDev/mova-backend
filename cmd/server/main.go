@@ -22,6 +22,11 @@ func main() {
 		log.Fatal("DATABASE_URL is required")
 	}
 
+	port := "8080"
+	if os.Getenv("PORT") != "" {
+		port = os.Getenv("PORT")
+	}
+
 	clerkKey := os.Getenv("CLERK_SECRET_KEY")
 	if clerkKey == "" {
 		log.Fatal("CLERK_SECRET_KEY is required")
@@ -48,8 +53,8 @@ func main() {
 		log.Fatalf("Failed to setup router: %v", err)
 	}
 
-	log.Println("Starting server on :8080")
-	if err := r.Run(":8080"); err != nil {
+	log.Println("Starting server on :" + port)
+	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }

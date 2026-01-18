@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -79,6 +80,7 @@ func (h *ClerkWebhookHandler) HandleUserCreated(c *gin.Context) {
 		Email:   email,
 	})
 	if err != nil {
+		log.Printf("failed to create user: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
 	}

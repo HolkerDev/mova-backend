@@ -9,7 +9,9 @@ import (
 )
 
 func Setup(queries *database.Queries, clerkWebhookSecret string) (*gin.Engine, error) {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(middleware.RequestLogger())
 
 	// Public routes
 	r.GET("/", handler.HelloWorld)
