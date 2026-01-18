@@ -28,6 +28,11 @@ func main() {
 	}
 	clerk.SetKey(clerkKey)
 
+	clerkWebhookSecret := os.Getenv("CLERK_WEBHOOK_SECRET")
+	if clerkWebhookSecret == "" {
+		log.Fatal("CLERK_WEBHOOK_SECRET is required")
+	}
+
 	ctx := context.Background()
 	pool, err := database.NewPool(ctx, dbURL)
 	if err != nil {
@@ -38,7 +43,10 @@ func main() {
 	log.Println("Connected to database")
 
 	queries := database.New(pool)
-	r := router.Setup(queries)
+	r, err := router.Setup(queries, clerkWebhookSecret)
+	if err != nil {
+		log.Fatalf("Failed to setup router: %v", err)
+	}
 
 	log.Println("Starting server on :8080")
 	if err := r.Run(":8080"); err != nil {

@@ -8,14 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(queries *database.Queries) *gin.Engine {
+func Setup(queries *database.Queries, clerkWebhookSecret string) (*gin.Engine, error) {
 	r := gin.Default()
 
 	// Public routes
 	r.GET("/", handler.HelloWorld)
 
-	// Webhooks (no auth)
-	clerkWebhookHandler := handler.NewClerkWebhookHandler(queries)
+	// Webhooks (no auth, but verified with svix)
+	clerkWebhookHandler, err := handler.NewClerkWebhookHandler(queries, clerkWebhookSecret)
+	if err != nil {
+		return nil, err
+	}
 	r.POST("/webhooks/clerk", clerkWebhookHandler.HandleUserCreated)
 
 	// Protected routes
@@ -26,5 +29,5 @@ func Setup(queries *database.Queries) *gin.Engine {
 		protected.GET("/me", userHandler.GetMe)
 	}
 
-	return r
+	return r, nil
 }

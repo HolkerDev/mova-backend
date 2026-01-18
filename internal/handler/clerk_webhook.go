@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	svix "github.com/svix/svix-webhooks/go"
 
 	"mova-backend/internal/database"
 )
@@ -26,15 +29,36 @@ type ClerkWebhookPayload struct {
 
 type ClerkWebhookHandler struct {
 	queries *database.Queries
+	wh      *svix.Webhook
 }
 
-func NewClerkWebhookHandler(queries *database.Queries) *ClerkWebhookHandler {
-	return &ClerkWebhookHandler{queries: queries}
+func NewClerkWebhookHandler(queries *database.Queries, webhookSecret string) (*ClerkWebhookHandler, error) {
+	wh, err := svix.NewWebhook(webhookSecret)
+	if err != nil {
+		return nil, err
+	}
+	return &ClerkWebhookHandler{queries: queries, wh: wh}, nil
 }
 
 func (h *ClerkWebhookHandler) HandleUserCreated(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to read body"})
+		return
+	}
+
+	headers := http.Header{}
+	headers.Set("svix-id", c.GetHeader("svix-id"))
+	headers.Set("svix-timestamp", c.GetHeader("svix-timestamp"))
+	headers.Set("svix-signature", c.GetHeader("svix-signature"))
+
+	if err := h.wh.Verify(body, headers); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
+		return
+	}
+
 	var payload ClerkWebhookPayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
+	if err := json.Unmarshal(body, &payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
 		return
 	}
