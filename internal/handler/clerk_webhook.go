@@ -2,14 +2,16 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	svix "github.com/svix/svix-webhooks/go"
 
 	"mova-backend/internal/database"
+	"mova-backend/internal/middleware"
 )
 
 type ClerkEmailAddress struct {
@@ -80,7 +82,13 @@ func (h *ClerkWebhookHandler) HandleUserCreated(c *gin.Context) {
 		Email:   email,
 	})
 	if err != nil {
-		log.Printf("failed to create user: %v", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			// User already exists (ON CONFLICT DO NOTHING)
+			middleware.Logger.Info("user already exists", "clerk_id", payload.Data.ID)
+			c.JSON(http.StatusOK, gin.H{"message": "user already exists"})
+			return
+		}
+		middleware.Logger.Error("failed to create user", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
 	}

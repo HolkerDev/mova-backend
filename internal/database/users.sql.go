@@ -12,7 +12,10 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (clerk_id, email) VALUES ($1, $2) RETURNING id, clerk_id, email, created_at
+INSERT INTO users (clerk_id, email)
+VALUES ($1, $2)
+ON CONFLICT (clerk_id) DO NOTHING
+RETURNING id, clerk_id, email, created_at
 `
 
 type CreateUserParams struct {
