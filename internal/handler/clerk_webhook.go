@@ -20,13 +20,13 @@ type ClerkEmailAddress struct {
 
 type ClerkUserData struct {
 	ID                    string              `json:"id"`
-	EmailAddresses        []ClerkEmailAddress `json:"email_addresses"`
 	PrimaryEmailAddressID string              `json:"primary_email_address_id"`
+	EmailAddresses        []ClerkEmailAddress `json:"email_addresses"`
 }
 
 type ClerkWebhookPayload struct {
-	Data ClerkUserData `json:"data"`
 	Type string        `json:"type"`
+	Data ClerkUserData `json:"data"`
 }
 
 type ClerkWebhookHandler struct {
@@ -54,13 +54,15 @@ func (h *ClerkWebhookHandler) HandleUserCreated(c *gin.Context) {
 	headers.Set("svix-timestamp", c.GetHeader("svix-timestamp"))
 	headers.Set("svix-signature", c.GetHeader("svix-signature"))
 
-	if err := h.wh.Verify(body, headers); err != nil {
+	err = h.wh.Verify(body, headers)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
 		return
 	}
 
 	var payload ClerkWebhookPayload
-	if err := json.Unmarshal(body, &payload); err != nil {
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
 		return
 	}

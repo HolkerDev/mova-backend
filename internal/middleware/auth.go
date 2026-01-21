@@ -13,9 +13,9 @@ import (
 )
 
 type AuthUser struct {
-	ID      uuid.UUID
 	ClerkID string
 	Email   string
+	ID      uuid.UUID
 }
 
 func ClerkAuth(userService *service.UserService) gin.HandlerFunc {
@@ -56,7 +56,11 @@ func ClerkAuth(userService *service.UserService) gin.HandlerFunc {
 
 func GetAuthUser(c *gin.Context) (AuthUser, bool) {
 	if user, exists := c.Get("auth_user"); exists {
-		return user.(AuthUser), true
+		authUser, ok := user.(AuthUser)
+		if !ok {
+			return AuthUser{}, false
+		}
+		return authUser, true
 	}
 	return AuthUser{}, false
 }

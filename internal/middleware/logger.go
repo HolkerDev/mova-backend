@@ -31,7 +31,11 @@ func RequestLogger() gin.HandlerFunc {
 		// Read request body
 		var requestBody []byte
 		if c.Request.Body != nil {
-			requestBody, _ = io.ReadAll(c.Request.Body)
+			var err error
+			requestBody, err = io.ReadAll(c.Request.Body)
+			if err != nil {
+				Logger.Error("failed to read request body", "error", err)
+			}
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
 

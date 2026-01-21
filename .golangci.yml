@@ -1,0 +1,67 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    # Line length
+    - lll
+
+    # Typical Go errors and bugs
+    - errcheck      # Check for unchecked errors
+    - staticcheck   # Go static analysis
+    - govet         # Reports suspicious constructs
+    - ineffassign   # Detects unused variable assignments
+    - unused        # Checks for unused code
+
+    # Code quality
+    - misspell      # Finds commonly misspelled words
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Reports unused function parameters
+    - nakedret      # Finds naked returns in long functions
+    - prealloc      # Finds slice declarations that could be preallocated
+    - nilerr        # Finds code that returns nil even if it checks that the error is not nil
+    - errorlint     # Finds issues with error wrapping
+
+  settings:
+    lll:
+      line-length: 120
+      tab-width: 4
+
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    govet:
+      enable-all: true
+
+    nakedret:
+      max-func-lines: 30
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - mova-backend
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests
+    - path: _test\.go
+      linters:
+        - errcheck
+        - unparam
+
+    # Exclude generated files
+    - path: \.sql\.go$
+      linters:
+        - lll
+
+  max-issues-per-linter: 50
+  max-same-issues: 10

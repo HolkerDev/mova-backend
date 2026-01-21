@@ -1,4 +1,4 @@
-.PHONY: run build clean db-up db-down sqlc migrate-up migrate-down migrate-create
+.PHONY: run build clean db-up db-down sqlc migrate-up migrate-down migrate-create lint lint-fix
 
 include .env
 export
@@ -30,3 +30,9 @@ migrate-down:
 migrate-create:
 	@read -p "Enter migration name: " name; \
 	migrate create -ext sql -dir migrations -seq $$name
+
+lint:
+	golangci-lint run ./...
+
+lint-fix:
+	golangci-lint run --fix ./...
