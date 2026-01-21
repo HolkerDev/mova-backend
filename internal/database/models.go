@@ -9,6 +9,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Deck struct {
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	Name           string
+	SourceLanguage string
+	TargetLanguage string
+	CreatedAt      pgtype.Timestamp
+}
+
 type User struct {
 	ID        uuid.UUID
 	ClerkID   string
