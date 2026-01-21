@@ -7,11 +7,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
 	svix "github.com/svix/svix-webhooks/go"
 
-	"mova-backend/internal/database"
 	"mova-backend/internal/middleware"
+	"mova-backend/internal/service"
 )
 
 type ClerkEmailAddress struct {
@@ -31,16 +30,16 @@ type ClerkWebhookPayload struct {
 }
 
 type ClerkWebhookHandler struct {
-	queries *database.Queries
-	wh      *svix.Webhook
+	userService *service.UserService
+	wh          *svix.Webhook
 }
 
-func NewClerkWebhookHandler(queries *database.Queries, webhookSecret string) (*ClerkWebhookHandler, error) {
+func NewClerkWebhookHandler(userService *service.UserService, webhookSecret string) (*ClerkWebhookHandler, error) {
 	wh, err := svix.NewWebhook(webhookSecret)
 	if err != nil {
 		return nil, err
 	}
-	return &ClerkWebhookHandler{queries: queries, wh: wh}, nil
+	return &ClerkWebhookHandler{userService: userService, wh: wh}, nil
 }
 
 func (h *ClerkWebhookHandler) HandleUserCreated(c *gin.Context) {
@@ -77,13 +76,9 @@ func (h *ClerkWebhookHandler) HandleUserCreated(c *gin.Context) {
 		return
 	}
 
-	user, err := h.queries.CreateUser(c.Request.Context(), database.CreateUserParams{
-		ClerkID: payload.Data.ID,
-		Email:   email,
-	})
+	user, err := h.userService.CreateUser(c.Request.Context(), payload.Data.ID, email)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			// User already exists (ON CONFLICT DO NOTHING)
+		if errors.Is(err, service.ErrUserAlreadyExists) {
 			middleware.Logger.Info("user already exists", "clerk_id", payload.Data.ID)
 			c.JSON(http.StatusOK, gin.H{"message": "user already exists"})
 			return

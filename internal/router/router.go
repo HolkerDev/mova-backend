@@ -1,14 +1,14 @@
 package router
 
 import (
-	"mova-backend/internal/database"
 	"mova-backend/internal/handler"
 	"mova-backend/internal/middleware"
+	"mova-backend/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(queries *database.Queries, clerkWebhookSecret string) (*gin.Engine, error) {
+func Setup(userService *service.UserService, clerkWebhookSecret string) (*gin.Engine, error) {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.RequestLogger())
@@ -17,7 +17,7 @@ func Setup(queries *database.Queries, clerkWebhookSecret string) (*gin.Engine, e
 	r.GET("/", handler.HelloWorld)
 
 	// Webhooks (no auth, but verified with svix)
-	clerkWebhookHandler, err := handler.NewClerkWebhookHandler(queries, clerkWebhookSecret)
+	clerkWebhookHandler, err := handler.NewClerkWebhookHandler(userService, clerkWebhookSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func Setup(queries *database.Queries, clerkWebhookSecret string) (*gin.Engine, e
 
 	// Protected routes
 	protected := r.Group("/")
-	protected.Use(middleware.ClerkAuth(queries))
+	protected.Use(middleware.ClerkAuth(userService))
 	{
 		userHandler := handler.NewUserHandler()
 		protected.GET("/me", userHandler.GetMe)

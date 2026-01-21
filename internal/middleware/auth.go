@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/clerk/clerk-sdk-go/v2"
@@ -8,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"mova-backend/internal/database"
+	"mova-backend/internal/service"
 )
 
 type AuthUser struct {
@@ -17,7 +18,7 @@ type AuthUser struct {
 	Email   string
 }
 
-func ClerkAuth(queries *database.Queries) gin.HandlerFunc {
+func ClerkAuth(userService *service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		handler := clerkhttp.RequireHeaderAuthorization()(
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,10 +28,15 @@ func ClerkAuth(queries *database.Queries) gin.HandlerFunc {
 					return
 				}
 
-				user, err := queries.GetUserByClerkID(r.Context(), claims.Subject)
+				user, err := userService.GetUserByClerkID(r.Context(), claims.Subject)
 				if err != nil {
-					Logger.Error("user not found", "clerk_id", claims.Subject, "error", err)
-					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+					if errors.Is(err, service.ErrUserNotFound) {
+						Logger.Error("user not found", "clerk_id", claims.Subject)
+						c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+						return
+					}
+					Logger.Error("failed to get user", "clerk_id", claims.Subject, "error", err)
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
 					return
 				}
 

@@ -9,7 +9,9 @@ import (
 	"github.com/joho/godotenv"
 
 	"mova-backend/internal/database"
+	"mova-backend/internal/repository"
 	"mova-backend/internal/router"
+	"mova-backend/internal/service"
 )
 
 func main() {
@@ -47,8 +49,12 @@ func main() {
 
 	log.Println("Connected to database")
 
+	// Initialize layers
 	queries := database.New(pool)
-	r, err := router.Setup(queries, clerkWebhookSecret)
+	userRepo := repository.NewUserRepository(queries)
+	userService := service.NewUserService(userRepo)
+
+	r, err := router.Setup(userService, clerkWebhookSecret)
 	if err != nil {
 		log.Fatalf("Failed to setup router: %v", err)
 	}
