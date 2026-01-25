@@ -31,6 +31,14 @@ type CreateDeckResponse struct {
 	CreatedAt      string `json:"created_at"`
 }
 
+type DeckResponse struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	SourceLanguage string `json:"source_language"`
+	TargetLanguage string `json:"target_language"`
+	CreatedAt      string `json:"created_at"`
+}
+
 type Language string
 
 const (
@@ -92,4 +100,32 @@ func (h *DeckHandler) CreateDeck(c *gin.Context) {
 		TargetLanguage: deck.TargetLanguage,
 		CreatedAt:      deck.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
 	})
+}
+
+func (h *DeckHandler) ListDecks(c *gin.Context) {
+	user, ok := middleware.GetAuthUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	decks, err := h.deckService.ListDecks(c.Request.Context(), user.ID)
+	if err != nil {
+		middleware.Logger.Error("failed to list decks", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list decks"})
+		return
+	}
+
+	response := make([]DeckResponse, len(decks))
+	for i, deck := range decks {
+		response[i] = DeckResponse{
+			ID:             deck.ID.String(),
+			Name:           deck.Name,
+			SourceLanguage: deck.SourceLanguage,
+			TargetLanguage: deck.TargetLanguage,
+			CreatedAt:      deck.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
 }

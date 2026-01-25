@@ -26,3 +26,7 @@ func (r *DeckRepository) Create(
 		TargetLanguage: targetLang,
 	})
 }
+
+func (r *DeckRepository) ListByUserID(ctx context.Context, userID uuid.UUID) ([]database.Deck, error) {
+	return r.queries.GetDecksByUserID(ctx, userID)
+}

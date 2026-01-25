@@ -22,3 +22,7 @@ func (s *DeckService) CreateDeck(
 ) (database.Deck, error) {
 	return s.deckRepo.Create(ctx, userID, name, sourceLang, targetLang)
 }
+
+func (s *DeckService) ListDecks(ctx context.Context, userID uuid.UUID) ([]database.Deck, error) {
+	return s.deckRepo.ListByUserID(ctx, userID)
+}

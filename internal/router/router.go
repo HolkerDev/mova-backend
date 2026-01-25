@@ -33,6 +33,7 @@ func Setup(
 		protected.GET("/me", userHandler.GetMe)
 
 		deckHandler := handler.NewDeckHandler(deckService)
+		protected.GET("/decks", deckHandler.ListDecks)
 		protected.POST("/decks", deckHandler.CreateDeck)
 	}
 
