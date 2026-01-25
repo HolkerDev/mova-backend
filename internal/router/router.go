@@ -8,7 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(userService *service.UserService, clerkWebhookSecret string) (*gin.Engine, error) {
+func Setup(
+	userService *service.UserService, deckService *service.DeckService, clerkWebhookSecret string,
+) (*gin.Engine, error) {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.RequestLogger())
@@ -29,6 +31,9 @@ func Setup(userService *service.UserService, clerkWebhookSecret string) (*gin.En
 	{
 		userHandler := handler.NewUserHandler()
 		protected.GET("/me", userHandler.GetMe)
+
+		deckHandler := handler.NewDeckHandler(deckService)
+		protected.POST("/decks", deckHandler.CreateDeck)
 	}
 
 	return r, nil

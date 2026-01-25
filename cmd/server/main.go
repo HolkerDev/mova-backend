@@ -53,8 +53,10 @@ func main() {
 	queries := database.New(pool)
 	userRepo := repository.NewUserRepository(queries)
 	userService := service.NewUserService(userRepo)
+	deckRepo := repository.NewDeckRepository(queries)
+	deckService := service.NewDeckService(deckRepo)
 
-	r, err := router.Setup(userService, clerkWebhookSecret)
+	r, err := router.Setup(userService, deckService, clerkWebhookSecret)
 	if err != nil {
 		log.Fatalf("Failed to setup router: %v", err)
 	}
